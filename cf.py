@@ -36,6 +36,7 @@ def to_df(file_path : str, df : pd.DataFrame, cnt : int):
         df.loc[ cnt, "发票金额" ] = 发票金额
         df.loc[ cnt, "税额" ] = 税额
         df.loc[ cnt, "含税价格" ] = 含税价格
+        df.loc[ cnt, "路径" ] = file_path
 
 
 def init_df():
