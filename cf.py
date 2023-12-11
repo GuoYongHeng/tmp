@@ -1,33 +1,52 @@
 
 import os
 import re
+import traceback
 import pdfplumber
 
 import pandas as pd
 
 def to_df(file_path : str, df : pd.DataFrame, cnt : int):
     with pdfplumber.open(file_path) as pdf:
-        
-        page = pdf.pages[ 0 ]
-        text = page.extract_text()
+        texts = []
+        for pg in pdf.pages:
+            texts.append( pg.extract_text() )
+        text = "\n".join( texts )
 
-        公司名称 = re.findall(r"购\s名\s*称[：:](\S*)", text)
+        公司名称 = re.findall(r"购\s名\s*称\s*[：:](\S*)", text)
         if len(公司名称) == 0:
-            公司名称 = re.findall(r"\n\s*名\s*称[：:](.*)", text)
+            公司名称 = re.findall(r"\n\s*名\s*称\s*[：:]\s*(\S*)", text)
+        if len(公司名称) == 0:
+            公司名称 = re.findall(r"\s*名\s*称\s*[：:](\S*)", text)
         公司名称 = 公司名称[0].strip()
 
         供应商名称 = re.findall(r"销\s名\s*称[：:](\S*)", text)
         if len(供应商名称) == 0:
             供应商名称 = re.findall(r"\n\s*名\s*称[：:](.*)", text)
+
         if len(供应商名称) == 1:
             供应商名称 = 供应商名称[0].strip()
         elif len(供应商名称) == 2:
             供应商名称 = 供应商名称[1].strip()
+        elif len(供应商名称) == 0:
+                供应商名称 = re.findall(r"售\s*名\s*称[：:](.*)", text)
+                if len(供应商名称) == 1:
+                    供应商名称 = 供应商名称[0].strip()
+                else:
+                    供应商名称 = ""
 
-        发票号码 = re.findall(r"发票号码[：:]\s*(\d*)", text)[0].strip()
+        发票号码 = re.findall(r"发票号码\s*[：:]\s*(\d*)", text)[0].strip()
 
-        发票金额 = re.findall("[¥￥](.*)[¥￥]", text)[0].strip()
-        税额 = re.findall("[¥￥].*[¥￥](.*)", text)[0].strip()
+        发票金额 = re.findall("\s*合\s*计\s*[¥￥](.*)[¥￥]", text)
+        if len(发票金额) == 0:
+            发票金额 = re.findall("\s*合\s*计\s*[¥￥](.*)\s*\*", text)
+        发票金额 = 发票金额[0].strip()
+
+        税额 = re.findall("[¥￥].*[¥￥](.*)", text)
+        if len(税额) != 0:
+            税额 = 税额[0].strip()
+        else:
+            税额 = ""
         含税价格 = re.findall("价税合计.*[¥￥](.*)", text)[0].strip()
 
         df.loc[ cnt, "公司名称" ] = 公司名称
@@ -36,6 +55,8 @@ def to_df(file_path : str, df : pd.DataFrame, cnt : int):
         df.loc[ cnt, "发票金额" ] = 发票金额
         df.loc[ cnt, "税额" ] = 税额
         df.loc[ cnt, "含税价格" ] = 含税价格
+        df.loc[ cnt, "文件名"] = file_path.split("\\")[-1].split(".")[0]
+        df.loc[ cnt, "发票类型" ] = text.split("\n")[0]
         df.loc[ cnt, "路径" ] = file_path
 
 
@@ -62,6 +83,7 @@ def main():
                 cnt += 1
             except Exception as e:
                 print(file_path, "出错")
+                print(str(traceback.format_exc()))
     else:
         to_df(path, df, cnt)
     
