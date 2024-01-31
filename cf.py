@@ -18,6 +18,7 @@ def to_df(file_path : str, df : pd.DataFrame, cnt : int):
             公司名称 = re.findall(r"\n\s*名\s*称\s*[：:]\s*(\S*)", text)
         if len(公司名称) == 0:
             公司名称 = re.findall(r"\s*名\s*称\s*[：:](\S*)", text)
+
         公司名称 = 公司名称[0].strip()
 
         供应商名称 = re.findall(r"销\s名\s*称[：:](\S*)", text)
@@ -40,6 +41,8 @@ def to_df(file_path : str, df : pd.DataFrame, cnt : int):
         发票金额 = re.findall("\s*合\s*计\s*[¥￥](.*)[¥￥]", text)
         if len(发票金额) == 0:
             发票金额 = re.findall("\s*合\s*计\s*[¥￥](.*)\s*\*", text)
+        if len(发票金额) == 0:
+            发票金额 = re.findall("[¥￥]([\d\.]*)\s*[¥￥]", text)
         发票金额 = 发票金额[0].strip()
 
         税额 = re.findall("[¥￥].*[¥￥](.*)", text)
