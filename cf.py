@@ -18,7 +18,8 @@ def to_df(file_path : str, df : pd.DataFrame, cnt : int):
             公司名称 = re.findall(r"\n\s*名\s*称\s*[：:]\s*(\S*)", text)
         if len(公司名称) == 0:
             公司名称 = re.findall(r"\s*名\s*称\s*[：:](\S*)", text)
-
+        if len(公司名称) == 0:
+            公司名称 = re.findall(r".*名名名称称称：：：(\S*) 销销销", text)
         公司名称 = 公司名称[0].strip()
 
         供应商名称 = re.findall(r"销\s名\s*称[：:](\S*)", text)
@@ -36,7 +37,10 @@ def to_df(file_path : str, df : pd.DataFrame, cnt : int):
                 else:
                     供应商名称 = ""
 
-        发票号码 = re.findall(r"发票号码\s*[：:]\s*(\d*)", text)[0].strip()
+        发票号码 = re.findall(r"发票号码\s*[：:]\s*(\d*)", text)
+        if len(发票号码) == 0:
+            发票号码 = re.findall(r".*发发发票票票号号号码码码：：：\s*(\d*)", text)
+        发票号码 = 发票号码[0].strip()
 
         发票金额 = re.findall("\s*合\s*计\s*[¥￥](.*)[¥￥]", text)
         if len(发票金额) == 0:
@@ -50,7 +54,11 @@ def to_df(file_path : str, df : pd.DataFrame, cnt : int):
             税额 = 税额[0].strip()
         else:
             税额 = ""
-        含税价格 = re.findall("价税合计.*[¥￥](.*)", text)[0].strip()
+
+        含税价格 = re.findall("价税合计.*[¥￥](.*)", text)
+        if len(含税价格) == 0:
+            含税价格 = re.findall("价税合计.*·(.*)", text)
+        含税价格 = 含税价格[0].strip()
 
         df.loc[ cnt, "公司名称" ] = 公司名称
         df.loc[ cnt, "供应商名称" ] = 供应商名称
